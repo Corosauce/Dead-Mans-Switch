@@ -117,7 +117,7 @@ public class DeadMansSwitch
     
     public static void resetDeadMansSwitch(long timeVal) {
     	lastResetTime = timeVal;
-    	System.out.println("reset switch: " + timeVal);
+    	//System.out.println("reset switch: " + timeVal);
     }
 
 }
