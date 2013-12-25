@@ -40,9 +40,9 @@ public class DMSTickHandler implements ITickHandler
     {
     	World world = DimensionManager.getWorld(0);
     	if (world != null) {
-    		if (lastCheckTime + DeadMansSwitch.resetSwitchRate < System.currentTimeMillis()) {
-    			DeadMansSwitch.resetDeadMansSwitch(System.currentTimeMillis());
-    			lastCheckTime = System.currentTimeMillis();
+    		if (lastCheckTime + DeadMansSwitch.resetSwitchRate < System.currentTimeMillis() / 1000) {
+    			DeadMansSwitch.resetDeadMansSwitch(System.currentTimeMillis() / 1000);
+    			lastCheckTime = System.currentTimeMillis() / 1000;
     			
     			if (DeadMansSwitch.forceACrashTest) {
     				System.out.println("--- DEAD MANS SWITCH forceACrashTest is set to true, FORCING A CRASH TO TEST AUTO SERVER RESTART ---");

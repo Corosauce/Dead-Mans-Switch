@@ -27,10 +27,13 @@ public class DeadMansSwitch
     /** For use in preInit ONLY */
     public Configuration preInitConfig;
     
-    public static int restartThreshold = 30000;
-    public static int resetSwitchRate = 5000;
+    public static int restartThreshold = 30;
+    public static int resetSwitchRate = 5;
     public static String classNameMain = "cpw.mods.fml.relauncher.ServerLaunchWrapper";
     public static boolean forceACrashTest = false;
+    
+    //shared thread access variables
+    public static long lastResetTime = -1;
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event)
@@ -38,10 +41,10 @@ public class DeadMansSwitch
     	preInitConfig = new Configuration(event.getSuggestedConfigurationFile());
     	try {
 	    	classNameMain = preInitConfig.get("default", "classNameMain", classNameMain).getString();
-	    	int secondsToRestart = preInitConfig.get("default", "secondsToRestart", Integer.valueOf(restartThreshold / 1000)).getInt();
-	    	restartThreshold = secondsToRestart * 1000;
-	    	int secondsToResetSwitch = preInitConfig.get("default", "secondsToResetSwitch", Integer.valueOf(resetSwitchRate / 1000)).getInt();
-	    	resetSwitchRate = secondsToResetSwitch * 1000;
+	    	int secondsToRestart = preInitConfig.get("default", "secondsToRestart", Integer.valueOf(restartThreshold)).getInt();
+	    	restartThreshold = secondsToRestart;
+	    	int secondsToResetSwitch = preInitConfig.get("default", "secondsToResetSwitch", Integer.valueOf(resetSwitchRate)).getInt();
+	    	resetSwitchRate = secondsToResetSwitch;
 	    	forceACrashTest = preInitConfig.get("default", "forceACrashTest", false).getBoolean(false);
     	} catch (Exception ex) {
     		ex.printStackTrace();
@@ -93,7 +96,7 @@ public class DeadMansSwitch
 	            	}
             	}
             	
-            	Thread.sleep(restartThreshold);
+            	Thread.sleep(restartThreshold * 1000);
             }
         } catch(Throwable throwable) {
             throwable.printStackTrace();
@@ -101,51 +104,20 @@ public class DeadMansSwitch
     }
     
     public static boolean checkForDeadMansSwitchReset() {
-    	try {
-	    	RandomAccessFile file = new RandomAccessFile("." + File.separator + "DeadMansSwitch.txt", "r");
-	    	FileChannel fc = file.getChannel();
-	    	ByteBuffer bb = ByteBuffer.allocate(8);
-	    	int bytesRead = fc.read(bb);
-	    	//bb.rewind();
-	    	bb.flip();
-	    	long timeMilliseconds = bb.getLong();
-	    	//bb.get();
-	    	fc.close();
-	    	file.close();
-	    	//System.out.println("read timeMilliseconds: " + timeMilliseconds);
-	    	long timeTillRestart = System.currentTimeMillis() - timeMilliseconds;
-	    	if (timeMilliseconds != -1 && timeTillRestart > restartThreshold) {
+    	long timeTillRestart = (System.currentTimeMillis()/1000) - lastResetTime;
+    	//System.out.println("timeTillRestart: " + (timeTillRestart - restartThreshold));
+    	if (lastResetTime != -1) {
+    		if (timeTillRestart > restartThreshold) {
 	    		//System.out.println("we should restart!");
 	    		return true;
-	    	}
-    	} catch (Exception ex) {
-    		ex.printStackTrace();
-    	} finally {
-    		
+    		}
     	}
     	return false;
     }
     
     public static void resetDeadMansSwitch(long timeVal) {
-    	FileChannel fc = null;
-    	try {
-	    	RandomAccessFile file = new RandomAccessFile("." + File.separator + "DeadMansSwitch.txt", "rw");
-	    	fc = file.getChannel();
-	    	ByteBuffer bb = ByteBuffer.allocate(8);
-	    	bb.clear();
-	    	bb.putLong(timeVal);
-	    	bb.flip();
-	    	while(bb.hasRemaining()) {
-	    		fc.write(bb);
-	    	}
-	    	fc.close();
-	    	file.close();
-	    	//System.out.println("write timeMilliseconds: " + timeVal);
-    	} catch (Exception ex) {
-    		ex.printStackTrace();
-    	} finally {
-    		
-    	}
+    	lastResetTime = timeVal;
+    	System.out.println("reset switch: " + timeVal);
     }
 
 }
